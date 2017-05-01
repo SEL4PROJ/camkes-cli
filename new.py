@@ -21,7 +21,7 @@ def instantiate_templates(args):
     templates_destinations = {
         "gitignore": ".gitignore",
         "app.camkes": "src/%s.camkes" % args.name,
-        "Makefile": "Makefile",
+        "Makefile": "src/Makefile",
     }
 
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(common.template_path()))
