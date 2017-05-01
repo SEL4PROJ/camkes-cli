@@ -67,7 +67,7 @@ def handle_new(args):
         args.directory = args.name
 
     if os.path.exists(args.directory):
-        raise DirectoryExists("Directory %s already exists" % args.directory)
+        raise DirectoryExists("Directory \"%s\" already exists" % args.directory)
 
     args.logger.info("Creating directories...")
     make_skeleton(args)
