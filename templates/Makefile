@@ -1,2 +1,2 @@
 TARGETS := $(notdir ${SOURCE_DIR}).cdl
-ADL := {% name %}.camkes
+ADL := {{ name }}.camkes
