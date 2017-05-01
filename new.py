@@ -36,7 +36,10 @@ def instantiate_templates(args):
 
         dst = os.path.join(args.directory, templates_destinations[source])
 
-        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        try:
+            os.makedirs(os.path.dirname(dst))
+        except OSError:
+            pass
 
         with open(dst, 'w') as outfile:
             outfile.write(output)
