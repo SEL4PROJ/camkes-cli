@@ -26,7 +26,7 @@ def instantiate_templates(args):
         "Kconfig": "src/Kconfig",
     }
 
-    env = jinja2.Environment(loader=jinja2.FileSystemLoader(common.template_path()))
+    env = jinja2.Environment(loader=jinja2.FileSystemLoader(common.base_template_path()))
 
     for source in templates_destinations:
         try:
