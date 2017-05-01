@@ -1,0 +1,5 @@
+config APP_{{ name.upper() }}
+    bool "CAmkES application: {{ name }}"
+    default n
+    help
+        CAmkES application: {{ name }}
