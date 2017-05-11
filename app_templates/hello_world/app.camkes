@@ -1,5 +1,5 @@
 import <std_connector.camkes>;
-import "components/HelloWorld/HelloWorld.camkes"
+import "components/HelloWorld/HelloWorld.camkes";
 
 assembly {
     composition {
