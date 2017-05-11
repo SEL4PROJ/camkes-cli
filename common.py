@@ -5,3 +5,6 @@ def base_path():
 
 def base_template_path():
     return os.path.join(base_path(), 'base_templates')
+
+def template_path():
+    return os.path.join(base_path(), 'templates')
