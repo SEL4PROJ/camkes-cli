@@ -58,7 +58,7 @@ def maybe_instantiate_template(args):
         return
 
     args.logger.info("Instantiating template: %s" % args.template)
-    template_path = os.path.join(common.template_path(), args.template)
+    template_path = os.path.join(common.app_template_path(), args.template)
 
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_path))
     try:

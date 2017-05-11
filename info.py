@@ -14,5 +14,5 @@ def make_subparser(subparsers):
 def handle_info(args):
 
     if args.list_templates:
-        for t in os.listdir(common.template_path()):
+        for t in os.listdir(common.app_template_path()):
             args.logger.info(t)
