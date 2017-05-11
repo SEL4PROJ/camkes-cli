@@ -5,7 +5,6 @@ import shutil
 import subprocess
 import jinja2
 import multiprocessing
-import pdb
 
 import defaults
 
@@ -76,7 +75,6 @@ def maybe_instantiate_template(args):
         for f in files:
 
             rel = os.path.relpath(os.path.join(path, f), base_path_source)
-            pdb.set_trace()
             try:
                 template = env.get_template(os.path.join("src", rel))
             except jinja2.exceptions.TemplateNotFound:
