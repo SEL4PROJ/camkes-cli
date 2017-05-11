@@ -4,8 +4,7 @@ import common
 
 def make_subparser(subparsers):
     parser = subparsers.add_parser('menuconfig', description="Configure build system")
-    parser.add_argument('config', help="Name to associate with configuration", type=str,
-                        choices=common.list_configs())
+    parser.add_argument('config', help="Name to associate with configuration", type=str)
     parser.set_defaults(func=handle_menuconfig)
 
 def handle_menuconfig(args):

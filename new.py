@@ -90,7 +90,8 @@ def instantiate_app_template(template, directory, info):
 def make_subparser(subparsers):
     parser = subparsers.add_parser('new', description="Create a new project")
     parser.add_argument('name', help="Name of project", type=str)
-    parser.add_argument('--directory', type=str, help="Alternative name of project directory", nargs="?")
+    parser.add_argument('--directory', type=str, help="Alternative name of project directory",
+                        default=None)
     parser.add_argument('--manifest_url', type=str, help="Base repo manifest",
                             default=defaults.CAMKES_MANIFEST_URL)
     parser.add_argument('--manifest_name', type=str, help="Base repo name",

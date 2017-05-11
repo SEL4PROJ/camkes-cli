@@ -9,7 +9,7 @@ def make_subparser(subparsers):
     parser.set_defaults(func=handle_init)
 
 def handle_init(args):
-    with open("camkes.toml") as info_file:
+    with open(common.markup_path()) as info_file:
         info = toml.load(info_file)
 
         args.logger.info("Downloading dependencies...")

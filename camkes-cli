@@ -48,6 +48,8 @@ def main(args):
         args.logger.error(e)
     except new.TemplateParseError as e:
         args.logger.error(e)
+    except common.RootNotFound as e:
+        args.logger.error(e)
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))

@@ -3,9 +3,50 @@ import shutil
 import subprocess
 
 import jinja2
+import pdb
 
 class MissingTemplate(Exception):
     pass
+
+class RootNotFound(Exception):
+    pass
+
+def markup_name():
+    return "camkes.toml"
+
+def markup_path():
+    return os.path.join(find_root(), markup_name())
+
+def config_dir():
+    return "configs"
+
+def config_path():
+    return os.path.join(find_root(), config_dir())
+
+def image_dir():
+    return "images"
+
+def image_path():
+    return os.path.join(find_root(), image_dir())
+
+def find_root():
+    """Traverse from the current directory to the root directory
+       looking for a directory containing a camkes markup file.
+       Returns the path to the closest ancestor directory of the
+       current directory containing such a file. Raises an
+       exception if no such directory is found."""
+    current_path = os.getcwd()
+    while True:
+        markup_path = os.path.join(current_path, markup_name())
+        if os.path.exists(markup_path):
+            return current_path
+
+        next_path = os.path.dirname(current_path)
+        if next_path == current_path:
+            break
+        current_path = next_path
+
+    raise RootNotFound("Failed to locate %s" % markup_name())
 
 def base_path():
     return os.path.dirname(__file__)
@@ -20,7 +61,7 @@ def build_template_path():
     return os.path.join(base_path(), 'build_templates')
 
 def build_system_path():
-    return "sel4"
+    return os.path.join(find_root(), "sel4")
 
 def build_config_path():
     return os.path.join(build_system_path(), ".config")
@@ -30,30 +71,34 @@ def build_images_path():
 
 def save_config(name):
     try:
-        os.makedirs("configs")
+        os.makedirs(os.path.join(find_root(), "configs"))
     except OSError:
         pass
 
-    shutil.copyfile(build_config_path(), os.path.join("configs", name))
+    shutil.copyfile(build_config_path(), os.path.join(config_path(), name))
 
 def load_config(name):
-    shutil.copyfile(os.path.join("configs", name), build_config_path())
+    shutil.copyfile(os.path.join(config_path(), name), build_config_path())
 
 def list_configs():
-    return os.listdir("configs")
+    try:
+        return os.listdir(config_path())
+    except RootNotFound:
+        return []
 
 def copy_images(name):
     try:
-        os.makedirs(os.path.join("images", name))
+        os.makedirs(os.path.join(image_path(), name))
     except OSError:
         pass
 
     for f in os.listdir(build_images_path()):
         try:
-            os.remove(os.path.join("images", name, f))
+            os.remove(os.path.join(image_path(), name, f))
         except OSError:
             pass
-        shutil.move(os.path.join(build_images_path(), f), os.path.join("images", name))
+        shutil.move(os.path.join(build_images_path(), f),
+                    os.path.join(image_path(), name))
 
 def get_code(directory, manifest_url, manifest_name, njobs):
 
