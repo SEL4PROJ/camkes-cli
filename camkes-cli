@@ -4,7 +4,9 @@ import sys
 import argparse
 import logging
 
+import common
 import new
+import init
 import info
 import menuconfig
 import build
@@ -27,6 +29,7 @@ def make_parser():
     subparsers = parser.add_subparsers()
 
     new.make_subparser(subparsers)
+    init.make_subparser(subparsers)
     info.make_subparser(subparsers)
     menuconfig.make_subparser(subparsers)
     build.make_subparser(subparsers)
@@ -41,7 +44,7 @@ def main(args):
         args.func(args)
     except new.DirectoryExists as e:
         args.logger.error(e)
-    except new.MissingTemplate as e:
+    except common.MissingTemplate as e:
         args.logger.error(e)
     except new.TemplateParseError as e:
         args.logger.error(e)

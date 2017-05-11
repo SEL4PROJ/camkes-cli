@@ -1,15 +1,13 @@
 import sys
 import os
-import common
-import shutil
-import subprocess
-import jinja2
 import multiprocessing
+import collections
 
+import toml
+import jinja2
+
+import common
 import defaults
-
-class MissingTemplate(Exception):
-    pass
 
 class DirectoryExists(Exception):
     pass
@@ -19,19 +17,13 @@ class TemplateParseError(Exception):
 
 def make_skeleton(args):
     os.mkdir(args.directory)
-    os.mkdir(os.path.join(args.directory, 'src'))
-    os.mkdir(os.path.join(args.directory, 'sel4'))
+    os.mkdir(os.path.join(args.directory, "src"))
 
-def make_template_context(args):
-    return {
-        "name": args.name,
-    }
-
-def instantiate_base_templates(args):
+def instantiate_base_templates(directory, info):
 
     templates_destinations = {
         "gitignore": ".gitignore",
-        "app.camkes": "src/%s.camkes" % args.name,
+        "app.camkes": "src/%s.camkes" % info["name"],
         "Makefile": "src/Makefile",
         "Kbuild": "src/Kbuild",
         "Kconfig": "src/Kconfig",
@@ -44,11 +36,11 @@ def instantiate_base_templates(args):
         try:
             template = env.get_template(source)
         except jinja2.exceptions.TemplateNotFound:
-            raise MissingTemplate("Missing template \"%s\"" % source)
+            raise common.MissingTemplate("Missing template \"%s\"" % source)
 
-        output = template.render(make_template_context(args))
+        output = template.render(info)
 
-        dst = os.path.join(args.directory, templates_destinations[source])
+        dst = os.path.join(directory, templates_destinations[source])
 
         try:
             os.makedirs(os.path.dirname(dst))
@@ -58,56 +50,21 @@ def instantiate_base_templates(args):
         with open(dst, 'w') as outfile:
             outfile.write(output)
 
-def instantiate_build_templates(args):
-    template_path = common.build_template_path()
-    env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_path))
+def instantiate_app_template(template, directory, info):
 
-    for (path, _, files) in os.walk(template_path):
-        for f in files:
-
-            # omit hidden files
-            if f.startswith('.'):
-                continue
-
-            rel = os.path.relpath(os.path.join(path, f), template_path)
-            dest_path = os.path.join(args.directory, rel)
-
-            try:
-                template = env.get_template(rel)
-            except jinja2.exceptions.TemplateNotFound:
-                raise MissingTemplate("Missing template \"%s\"" % rel)
-
-            try:
-                os.remove(dest_path)
-            except OSError:
-                pass
-
-            try:
-                os.makedirs(os.path.dirname(dest_path))
-            except OSError:
-                pass
-
-            with open(dest_path, 'w') as outfile:
-                outfile.write(template.render(make_template_context(args)))
-
-def maybe_instantiate_app_template(args):
-    if args.template is None:
-        return
-
-    args.logger.info("Instantiating template: %s" % args.template)
-    template_path = os.path.join(common.app_template_path(), args.template)
+    template_path = os.path.join(common.app_template_path(), template)
 
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_path))
     try:
         top_level_template = env.get_template("app.camkes")
     except jinja2.exceptions.TemplateNotFound:
-        raise MissingTemplate("Missing template \"app.camkes\"")
+        raise common.MissingTemplate("Missing template \"app.camkes\"")
 
-    with open(os.path.join(args.directory, "src", args.name + ".camkes"), 'w') as outfile:
-        outfile.write(top_level_template.render(make_template_context(args)))
+    with open(os.path.join(directory, "src", info["name"] + ".camkes"), 'w') as outfile:
+        outfile.write(top_level_template.render(info))
 
     base_path_source = os.path.join(template_path, "src")
-    base_path_destintaion = os.path.join(args.directory, "src")
+    base_path_destintaion = os.path.join(directory, "src")
     for (path, _, files) in os.walk(base_path_source):
 
         for f in files:
@@ -120,7 +77,7 @@ def maybe_instantiate_app_template(args):
             try:
                 template = env.get_template(os.path.join("src", rel))
             except jinja2.exceptions.TemplateNotFound:
-                raise MissingTemplate("Missing template \"%s\"" % rel)
+                raise common.MissingTemplate("Missing template \"%s\"" % rel)
 
             destination_file = os.path.join(base_path_destintaion, rel)
             try:
@@ -128,22 +85,7 @@ def maybe_instantiate_app_template(args):
             except OSError:
                 pass
             with open(destination_file, 'w') as outfile:
-                outfile.write(template.render(make_template_context(args)))
-
-def get_code(args):
-    cwd = os.getcwd()
-    os.chdir(os.path.join(args.directory, 'sel4'))
-    subprocess.call(['repo', 'init', '-u', args.manifest_url, '-m', args.manifest_name])
-    subprocess.call(['repo', 'sync'])
-    os.chdir(cwd)
-
-def make_symlinks(args):
-    src = os.path.join(args.directory, 'src')
-    dst = os.path.join(args.directory, 'sel4', 'apps')
-    cwd = os.getcwd()
-    os.chdir(dst)
-    os.symlink(os.path.relpath(src, dst), args.name)
-    os.chdir(cwd)
+                outfile.write(template.render(info))
 
 def make_subparser(subparsers):
     parser = subparsers.add_parser('new', description="Create a new project")
@@ -158,6 +100,12 @@ def make_subparser(subparsers):
     parser.add_argument('--template', type=str, help="Name of template to instantiate", nargs="?")
     parser.set_defaults(func=handle_new)
 
+def make_info(args):
+    return collections.OrderedDict([
+        ("name", args.name),
+        ("manifest_url", args.manifest_url),
+        ("manifest_name", args.manifest_name),
+    ])
 def handle_new(args):
     if args.directory is None:
         args.directory = args.name
@@ -165,14 +113,28 @@ def handle_new(args):
     if os.path.exists(args.directory):
         raise DirectoryExists("Directory \"%s\" already exists" % args.directory)
 
+    info = make_info(args)
+
     args.logger.info("Creating directories...")
     make_skeleton(args)
+
     args.logger.info("Instantiating base templates...")
-    instantiate_base_templates(args)
+    instantiate_base_templates(args.directory, info)
+
     args.logger.info("Downloading dependencies...")
-    get_code(args)
+    common.get_code(args.directory, args.manifest_url, args.manifest_name, args.jobs)
+
     args.logger.info("Instantiating build templates...")
-    instantiate_build_templates(args)
-    maybe_instantiate_app_template(args)
-    make_symlinks(args)
+    common.instantiate_build_templates(args.directory, info)
+
+    if args.template is not None:
+        args.logger.info("Instantiating app template...")
+        instantiate_app_template(args.template, args.directory, info)
+
+    args.logger.info("Creating build system symlinks...")
+    common.make_symlinks(args.directory, info)
+
+    with open(os.path.join(args.directory, "camkes.toml"), 'w') as info_file:
+        toml.dump(info, info_file)
+
     args.logger.info("Finished setting up new project \"%s\" in directory \"%s\"" % (args.name, args.directory))

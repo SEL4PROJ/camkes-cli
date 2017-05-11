@@ -4,7 +4,8 @@ import common
 
 def make_subparser(subparsers):
     parser = subparsers.add_parser('build', description="Build the app")
-    parser.add_argument('config', help="Name of configuration to build", type=str)
+    parser.add_argument('config', help="Name of configuration to build", type=str,
+                        choices=common.list_configs())
     parser.add_argument('--jobs', '-j', type=int, help="Number of threads to use",
                         default=1)
     parser.set_defaults(func=handle_build)
