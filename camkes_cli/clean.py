@@ -1,6 +1,6 @@
 import subprocess
 
-import common
+from . import common
 
 def make_subparser(subparsers):
     parser = subparsers.add_parser('clean', description="Delete generated object and binary files")

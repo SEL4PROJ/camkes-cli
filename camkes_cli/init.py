@@ -1,6 +1,7 @@
 import multiprocessing
 import toml
-import common
+
+from . import common
 
 def make_subparser(subparsers):
     parser = subparsers.add_parser('init', description="Initialize an existing project")

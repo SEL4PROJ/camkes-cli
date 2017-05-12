@@ -6,8 +6,8 @@ import collections
 import toml
 import jinja2
 
-import common
-import defaults
+from . import common
+from . import defaults
 
 class DirectoryExists(Exception):
     pass

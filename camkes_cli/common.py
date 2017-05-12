@@ -3,7 +3,6 @@ import shutil
 import subprocess
 
 import jinja2
-import pdb
 
 class MissingTemplate(Exception):
     pass
@@ -51,14 +50,17 @@ def find_root():
 def base_path():
     return os.path.dirname(__file__)
 
+def template_path():
+    return os.path.join(base_path(), 'templates')
+
 def base_template_path():
-    return os.path.join(base_path(), 'base_templates')
+    return os.path.join(template_path(), 'base_templates')
 
 def app_template_path():
-    return os.path.join(base_path(), 'app_templates')
+    return os.path.join(template_path(), 'app_templates')
 
 def build_template_path():
-    return os.path.join(base_path(), 'build_templates')
+    return os.path.join(template_path(), 'build_templates')
 
 def build_system_path():
     return os.path.join(find_root(), "sel4")

@@ -1,6 +1,6 @@
 import os
 
-import common
+from . import common
 
 def list_templates():
     return os.listdir(common.base_template_path())

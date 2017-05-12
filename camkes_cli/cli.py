@@ -3,14 +3,15 @@
 import sys
 import argparse
 import logging
+import pkg_resources
 
-import common
-import new
-import init
-import info
-import menuconfig
-import build
-import clean
+from . import common
+from . import new
+from . import init
+from . import info
+from . import menuconfig
+from . import build
+from . import clean
 
 def init_logger():
     logger = logging.getLogger(__name__)
@@ -37,8 +38,8 @@ def make_parser():
 
     return parser
 
-def main(args):
-    args = make_parser().parse_args(args)
+def main():
+    args = make_parser().parse_args(sys.argv[1:])
     args.logger = init_logger()
     try:
         args.func(args)
@@ -50,6 +51,3 @@ def main(args):
         args.logger.error(e)
     except common.RootNotFound as e:
         args.logger.error(e)
-
-if __name__ == '__main__':
-    sys.exit(main(sys.argv[1:]))
