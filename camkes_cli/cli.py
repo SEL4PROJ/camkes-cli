@@ -36,10 +36,14 @@ def make_parser():
     return parser
 
 def main():
-    args = make_parser().parse_args(sys.argv[1:])
+    parser = make_parser()
+    args = parser.parse_args(sys.argv[1:])
     args.logger = init_logger()
     try:
-        args.func(args)
+        if 'func' in args:
+            args.func(args)
+        else:
+            parser.print_help()
     except new.DirectoryExists as e:
         args.logger.error(e)
     except common.MissingTemplate as e:
