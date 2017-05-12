@@ -1,7 +1,6 @@
 import sys
 import argparse
 import logging
-import pkg_resources
 
 from . import common
 from . import new
