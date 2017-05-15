@@ -1,14 +1,26 @@
 import os
 import shutil
 import subprocess
-import multiprocessing
+import filecmp
 
 import jinja2
+
+APP_PREFIX = "capdl-loader-experimental-image-"
+KERNEL_PREFIX = "kernel-"
 
 class MissingTemplate(Exception):
     pass
 
 class RootNotFound(Exception):
+    pass
+
+class NoApp(Exception):
+    pass
+
+class MultipleApps(Exception):
+    pass
+
+class MultipleKernels(Exception):
     pass
 
 def markup_name():
@@ -28,6 +40,27 @@ def image_dir():
 
 def image_path():
     return os.path.join(find_root(), image_dir())
+
+def app_image_paths(config):
+    directory_path = os.path.join(image_path(), config)
+    app_candidates = [f for f in os.listdir(directory_path) if f.startswith(APP_PREFIX)]
+    if len(app_candidates) == 0:
+        raise NoApp("No app image found for config %s" % config)
+    if len(app_candidates) > 1:
+        raise MultipleApps("Multiple app images fonud for config %s" % config)
+
+    kernel_candidates = [f for f in os.listdir(directory_path) if f.startswith(KERNEL_PREFIX)]
+    if len(kernel_candidates) > 1:
+        raise MultipleKernels("Multiple kernel images fonud for config %s" % config)
+
+    app = app_candidates[0]
+    if len(kernel_candidates) == 1:
+        kernel = kernel_candidates[0]
+    else:
+        kernel = None
+
+    return (os.path.join(directory_path, app),
+            os.path.join(directory_path, kernel) if kernel else None)
 
 def find_root():
     """Traverse from the current directory to the root directory
@@ -79,6 +112,11 @@ def save_config(name):
         pass
 
     shutil.copyfile(build_config_path(), os.path.join(config_path(), name))
+
+def config_changed(name):
+    if not os.path.exists(build_config_path()):
+        return False
+    return not filecmp.cmp(os.path.join(config_path(), name), build_config_path())
 
 def load_config(name):
     shutil.copyfile(os.path.join(config_path(), name), build_config_path())
@@ -165,7 +203,3 @@ def make_symlinks(directory, info):
     os.chdir(dst)
     os.symlink(os.path.relpath(src, dst), info["name"])
     os.chdir(cwd)
-
-def add_jobs_argument(parser):
-    parser.add_argument('--jobs', type=int, help="Number of threads to use",
-                        default=multiprocessing.cpu_count())

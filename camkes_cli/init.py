@@ -5,7 +5,6 @@ from . import common
 
 def make_subparser(subparsers):
     parser = subparsers.add_parser('init', description="Initialize an existing project")
-    common.add_jobs_argument(parser)
     parser.set_defaults(func=handle_init)
 
 def handle_init(args):

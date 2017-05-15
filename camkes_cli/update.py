@@ -6,7 +6,6 @@ from . import common
 
 def make_subparser(subparsers):
     parser = subparsers.add_parser('update', description="Update build system")
-    common.add_jobs_argument(parser)
     parser.set_defaults(func=handle_update)
 
 def handle_update(args):

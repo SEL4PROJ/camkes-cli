@@ -1,6 +1,7 @@
 import sys
 import argparse
 import logging
+import multiprocessing
 
 from . import common
 from . import new
@@ -10,6 +11,8 @@ from . import menuconfig
 from . import build
 from . import clean
 from . import update
+from . import run
+from . import config
 
 def init_logger():
     logger = logging.getLogger(__name__)
@@ -25,6 +28,10 @@ def init_logger():
 def make_parser():
     parser = argparse.ArgumentParser()
 
+    # common arguments
+    parser.add_argument('--jobs', type=int, help="Number of threads to use",
+                        default=multiprocessing.cpu_count())
+
     subparsers = parser.add_subparsers()
 
     new.make_subparser(subparsers)
@@ -34,6 +41,8 @@ def make_parser():
     build.make_subparser(subparsers)
     clean.make_subparser(subparsers)
     update.make_subparser(subparsers)
+    run.make_subparser(subparsers)
+    config.make_subparser(subparsers)
 
     return parser
 
@@ -53,4 +62,14 @@ def main():
     except new.TemplateParseError as e:
         args.logger.error(e)
     except common.RootNotFound as e:
+        args.logger.error(e)
+    except common.NoApp as e:
+        args.logger.error(e)
+    except common.MultipleApps as e:
+        args.logger.error(e)
+    except common.MultipleKernels as e:
+        args.logger.error(e)
+    except run.UnknownArch as e:
+        args.logger.error(e)
+    except run.MissingKernel as e:
         args.logger.error(e)

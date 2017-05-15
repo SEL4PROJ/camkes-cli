@@ -27,7 +27,9 @@ def instantiate_base_templates(directory, info):
         "Makefile": "src/Makefile",
         "Kbuild": "src/Kbuild",
         "Kconfig": "src/Kconfig",
-        "ia32_config": "configs/ia32",
+        "config_x86": "configs/x86",
+        "config_x86_64": "configs/x86_64",
+        "config_aarch32": "configs/aarch32",
     }
 
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(common.base_template_path()))
@@ -96,7 +98,6 @@ def make_subparser(subparsers):
                             default=defaults.CAMKES_MANIFEST_URL)
     parser.add_argument('--manifest_name', type=str, help="Base repo name",
                             default=defaults.CAMKES_MANIFEST_NAME)
-    common.add_jobs_argument(parser)
     parser.add_argument('--template', type=str, help="Name of template to instantiate", nargs="?")
     parser.set_defaults(func=handle_new)
 

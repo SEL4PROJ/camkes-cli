@@ -20,7 +20,7 @@ setup(
     author_email='Stephen.Sherratt@data61.csiro.au',
     keywords='camkes sel4',
     packages=[package_name],
-    install_requires=['jinja2', 'toml'],
+    install_requires=['jinja2', 'toml', 'pyelftools'],
     entry_points={
         'console_scripts': [
             'camkes-cli=camkes_cli.cli:main',
