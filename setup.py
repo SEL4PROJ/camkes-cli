@@ -14,6 +14,7 @@ setup(
     name='camkes-cli',
     version='0.1.0',
     description='Command line interface for the CAmkES component framework',
+    url='https://github.com/seL4proj/camkes-cli',
     license='BSD2',
     author='Stephen Sherratt',
     author_email='Stephen.Sherratt@data61.csiro.au',
