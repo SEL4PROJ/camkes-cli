@@ -96,8 +96,7 @@ def make_subparser(subparsers):
                             default=defaults.CAMKES_MANIFEST_URL)
     parser.add_argument('--manifest_name', type=str, help="Base repo name",
                             default=defaults.CAMKES_MANIFEST_NAME)
-    parser.add_argument('--jobs', type=int, help="Number of threads to use when downloading code",
-                            default=multiprocessing.cpu_count())
+    common.add_jobs_argument(parser)
     parser.add_argument('--template', type=str, help="Name of template to instantiate", nargs="?")
     parser.set_defaults(func=handle_new)
 
@@ -122,18 +121,11 @@ def handle_new(args):
     args.logger.info("Instantiating base templates...")
     instantiate_base_templates(args.directory, info)
 
-    args.logger.info("Downloading dependencies...")
-    common.get_code(args.directory, args.manifest_url, args.manifest_name, args.jobs)
-
-    args.logger.info("Instantiating build templates...")
-    common.instantiate_build_templates(args.directory, info)
-
     if args.template is not None:
         args.logger.info("Instantiating app template...")
         instantiate_app_template(args.template, args.directory, info)
 
-    args.logger.info("Creating build system symlinks...")
-    common.make_symlinks(args.directory, info)
+    common.init_build_system(args.logger, args.directory, info, args.jobs)
 
     with open(os.path.join(args.directory, "camkes.toml"), 'w') as info_file:
         toml.dump(info, info_file)

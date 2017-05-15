@@ -1,6 +1,7 @@
 import os
 import shutil
 import subprocess
+import multiprocessing
 
 import jinja2
 
@@ -115,6 +116,16 @@ def get_code(directory, manifest_url, manifest_name, njobs):
     subprocess.call(['repo', 'sync', '--jobs', str(njobs)])
     os.chdir(cwd)
 
+def init_build_system(logger, directory, info, jobs):
+    logger.info("Downloading dependencies...")
+    get_code(directory, info["manifest_url"], info["manifest_name"], jobs)
+
+    logger.info("Instantiating build templates...")
+    instantiate_build_templates(directory, info)
+
+    logger.info("Creating build system symlinks...")
+    make_symlinks(directory, info)
+
 def instantiate_build_templates(directory, info):
     template_path = build_template_path()
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_path))
@@ -154,3 +165,7 @@ def make_symlinks(directory, info):
     os.chdir(dst)
     os.symlink(os.path.relpath(src, dst), info["name"])
     os.chdir(cwd)
+
+def add_jobs_argument(parser):
+    parser.add_argument('--jobs', type=int, help="Number of threads to use",
+                        default=multiprocessing.cpu_count())

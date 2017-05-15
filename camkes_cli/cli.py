@@ -9,6 +9,7 @@ from . import info
 from . import menuconfig
 from . import build
 from . import clean
+from . import update
 
 def init_logger():
     logger = logging.getLogger(__name__)
@@ -32,6 +33,7 @@ def make_parser():
     menuconfig.make_subparser(subparsers)
     build.make_subparser(subparsers)
     clean.make_subparser(subparsers)
+    update.make_subparser(subparsers)
 
     return parser
 
