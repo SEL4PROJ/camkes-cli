@@ -2,9 +2,9 @@ import <std_connector.camkes>;
 
 assembly {
     composition {
-
+        // TODO
     }
     configuration {
-
+        // TODO
     }
 }

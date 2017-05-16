@@ -1,0 +1,9 @@
+{% for import in imports %}import "{{import}}";
+{% endfor %}
+component {{ name }} {
+{% if control %}    control;
+{% elif hardware %}    hardware;
+{% endif %}{% for interface in interfaces %}
+    {{ interface.keyword }} {{ interface.type }} {{ interface.name }};{% endfor %}
+}
+

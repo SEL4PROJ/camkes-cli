@@ -1,7 +1,11 @@
+import pdb
+import sys
 import os
 import shutil
 import subprocess
 import filecmp
+import multiprocessing
+import importlib
 
 import jinja2
 
@@ -23,6 +27,9 @@ class MultipleApps(Exception):
 class MultipleKernels(Exception):
     pass
 
+class MissingProcedure(Exception):
+    pass
+
 def markup_name():
     return "camkes.toml"
 
@@ -40,6 +47,27 @@ def image_dir():
 
 def image_path():
     return os.path.join(find_root(), image_dir())
+
+def src_dir():
+    return "src"
+
+def src_path():
+    return os.path.join(find_root(), src_dir())
+
+def procedure_dir():
+    return "interfaces"
+
+def procedure_path():
+    return os.path.join(src_path(), procedure_dir())
+
+def component_dir():
+    return "components"
+
+def component_path():
+    return os.path.join(src_path(), component_dir())
+
+def component_src_filename():
+    return "main.c"
 
 def app_image_paths(config):
     directory_path = os.path.join(image_path(), config)
@@ -95,6 +123,9 @@ def app_template_path():
 
 def build_template_path():
     return os.path.join(template_path(), 'build_templates')
+
+def part_template_path():
+    return os.path.join(template_path(), 'part_templates')
 
 def build_system_path():
     return os.path.join(find_root(), "sel4")
@@ -196,6 +227,13 @@ def instantiate_build_templates(directory, info):
             with open(dest_path, 'w') as outfile:
                 outfile.write(template.render(info))
 
+def add_argument_jobs(parser):
+    parser.add_argument('--jobs', type=int, help="Number of threads to use",
+                        default=multiprocessing.cpu_count())
+
+def add_argument_edit(parser):
+    parser.add_argument('--edit', help="Edit newly created file", action='store_true')
+
 def make_symlinks(directory, info):
     src = os.path.join(directory, 'src')
     dst = os.path.join(directory, 'sel4', 'apps')
@@ -203,3 +241,78 @@ def make_symlinks(directory, info):
     os.chdir(dst)
     os.symlink(os.path.relpath(src, dst), info["name"])
     os.chdir(cwd)
+
+def camkes_import_path():
+    return os.path.join(camkes_module_path(), "include", "builtin")
+
+def camkes_module_path():
+    return os.path.join(build_system_path(), "tools", "camkes")
+
+def capdl_module_path():
+    return os.path.join(build_system_path(), "tools", "python-capdl")
+
+def add_camkes_module_path():
+    path = camkes_module_path()
+    if path not in sys.path:
+        sys.path.append(camkes_module_path())
+        sys.path.append(capdl_module_path())
+
+def camkes_parser_module():
+    add_camkes_module_path()
+    return importlib.import_module("camkes.parser")
+
+def camkes_ast_module():
+    add_camkes_module_path()
+    return importlib.import_module("camkes.ast")
+
+def camkes_templates_module():
+    add_camkes_module_path()
+    return importlib.import_module("camkes.templates")
+
+def spawn_editor(path):
+    editor = os.getenv("EDITOR", "vim")
+    subprocess.call([editor, path])
+
+def find_procedure(name, logger):
+
+    # camkes expects options as an object
+    class Opts:
+        def __init__(self, path):
+            self.import_path = [camkes_import_path(), os.path.dirname(path)]
+
+    camkes_parser = camkes_parser_module()
+    camkes_ast = camkes_ast_module()
+
+    all_procedures = set()
+
+    for path, _, files in os.walk(src_path()):
+        for filename in files:
+            if filename.endswith(".camkes"):
+                full_path = os.path.join(path, filename)
+                with open(full_path, 'r') as f:
+                    string = f.read()
+                current_path = os.getcwd()
+                os.chdir(path)
+                # add an assembly so the parser doesn't complain when parsing a file with no assembly
+                string_with_assembly = "component __{}assembly{composition{component __ __;}}%s" % string
+                try:
+                    ast, _ = camkes_parser.parse_string(string_with_assembly, Opts(full_path))
+                except (camkes_parser.exception.ParseError, camkes_ast.exception.ASTError):
+                    logger.warn("While searching for definition of procedure %s, failed to parse %s"
+                                % (name, os.path.relpath(full_path, find_root())))
+                    continue
+                except camkes_ast.exception.ASTError:
+                    logger.warn("While searching for definition of procedure %s, failed to parse %s"
+                                % (name, os.path.relpath(full_path, find_root())))
+                    continue
+
+                os.chdir(current_path)
+
+                for item in ast.items:
+                    if isinstance(item, camkes_ast.Procedure):
+                        all_procedures.add(item.name)
+                        if item.name == name:
+                            return item, full_path
+
+    raise MissingProcedure("Failed to find definition of procedure %s.\nFound procedures:\n%s"
+                           % (name, "\n".join("- %s" % name for name in sorted(all_procedures))))

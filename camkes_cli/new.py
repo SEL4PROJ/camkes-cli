@@ -100,6 +100,7 @@ def make_subparser(subparsers):
                             default=defaults.CAMKES_MANIFEST_NAME)
     parser.add_argument('--template', type=str, help="Name of template to instantiate", nargs="?")
     parser.set_defaults(func=handle_new)
+    common.add_argument_jobs(parser)
 
 def make_info(args):
     return collections.OrderedDict([
